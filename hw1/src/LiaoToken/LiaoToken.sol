@@ -7,16 +7,17 @@ interface IERC20 {
     function transfer(address to, uint256 amount) external returns (bool);
     function transferFrom(address from, address to, uint256 value) external returns (bool);
     function approve(address spender, uint256 amount) external returns (bool);
-    function allowance(address owner, address spender) external view returns (uint256);
+    function allowance(address from, address spender) external view returns (uint256);
 
     event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
+    event Approval(address indexed from, address indexed spender, uint256 value);
 }
 
 contract LiaoToken is IERC20 {
     // TODO: you might need to declare several state variable here
     mapping(address account => uint256) private _balances;
     mapping(address account => bool) isClaim;
+    mapping(address => mapping (address => uint256)) _allowance;
 
     uint256 private _totalSupply;
 
@@ -60,17 +61,32 @@ contract LiaoToken is IERC20 {
 
     function transfer(address to, uint256 amount) external returns (bool) {
         // TODO: please add your implementaiton here
+        if (_balances[msg.sender] < amount) revert();
+        _balances[msg.sender] -= amount;
+        _balances[to] += amount;
+        emit Transfer(msg.sender, to, amount);
+        return true;
     }
 
     function transferFrom(address from, address to, uint256 value) external returns (bool) {
         // TODO: please add your implementaiton here
+        if (_balances[from] < value || _allowance[from][msg.sender] < value) revert();
+        _balances[from] -= value;
+        _allowance[from][msg.sender] -= value;
+        _balances[to] += value;
+        emit Transfer(from, to , value);
+        return true;
     }
 
     function approve(address spender, uint256 amount) external returns (bool) {
         // TODO: please add your implementaiton here
+        _allowance[msg.sender][spender] = amount;
+        emit Approval(msg.sender, spender, amount);
+        return true;
     }
 
-    function allowance(address owner, address spender) public view returns (uint256) {
+    function allowance(address from, address spender) public view returns (uint256) {
         // TODO: please add your implementaiton here
+        return _allowance[from][spender];
     }
 }
